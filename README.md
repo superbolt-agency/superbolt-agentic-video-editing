@@ -4,6 +4,8 @@ Claude Code skills for editing performance video ads (Meta, TikTok) without open
 
 These are the skills from the [AI video editing livestream](https://www.youtube.com/watch?v=GQey2B90__4). The full transcript, with a summary, is in [`transcript/`](transcript/2026-10-13-ai-video-editing-livestream.md).
 
+Forked from Parker repo: https://github.com/real-simple-labs/agentic-video-editing
+
 ## What's in here
 
 | Skill | What it does |
@@ -35,12 +37,29 @@ When a note states a general rule ("don't cut people off before the end of a sen
 
 ## Install
 
-**Easiest:** install Homebrew and ffmpeg, open this folder in Claude Code (the desktop app works) and say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
+**Easy Install:** 
 
-**By hand:**
+Open your Terminal. Check if you have Homebrew installed by typing this command and pressing enter.
+```bash
+brew --version
+```
+
+If you don't have Homebrew installed, enter this command and go through the Homebrew installation process. It might ask you y/n questions during installation.
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Next, install FFMPEG by entering this command in the Terminal.
+```bash
+brew install ffmpeg
+```
+
+Open this folder in Claude Code (the desktop app works) and say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
+
+**Manual Install:**
 
 ```bash
-git clone https://github.com/real-simple-labs/agentic-video-editing.git
+git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
 mkdir -p ~/.claude/skills
 cp -R agentic-video-editing/skills/* ~/.claude/skills/
 ```

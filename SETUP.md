@@ -17,7 +17,7 @@ Run each check; act only if it fails.
 | 1 | `uname -m` prints `arm64` | Stop. These skills need a Mac with Apple Silicon (M1 or later): transcription, rendering and QA all use Apple-only libraries. |
 | 2 | `brew --version` | Back to "What the person does first", step 2. If Homebrew is installed but not found, run `eval "$(/opt/homebrew/bin/brew shellenv)"` and ask them to run the "Next steps" lines again. |
 | 3 | `ffmpeg -version` | `brew install ffmpeg` |
-| 4 | `xcode-select -p` | `xcode-select --install`. A system dialog opens; the person clicks Install and waits for it to finish. `video-qa` needs it to build its text-reading helper. |
+| 4 | `xcode-select -p` (Apple's command-line tools; `video-qa` needs them to build its text-reading helper) | Normally already there: the Homebrew installer installs them. If the check fails anyway, run `xcode-select --install`; a system dialog opens, and the person clicks Install and waits for it to finish. |
 | 5 | A compatible Python: `/opt/homebrew/bin/python3.13 --version` (3.10 to 3.14 all work) | `brew install python@3.13`. **Don't use plain `python3`:** Homebrew's default is now 3.15, and mlx-whisper's dependencies (torch) don't support 3.15 yet. That's the cause of "requirements are unsatisfiable … cp315" and "externally-managed-environment" errors. |
 | 6 | `pipx --version` | `brew install pipx && pipx ensurepath` |
 | 7 | `~/.local/bin/mlx_whisper --help` | `pipx install --python /opt/homebrew/bin/python3.13 mlx-whisper`. Never `pip3 install` into Homebrew's Python. |
