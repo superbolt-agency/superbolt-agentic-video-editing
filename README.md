@@ -30,9 +30,10 @@ When a note states a general rule ("don't cut people off before the end of a sen
 
 - **macOS on Apple Silicon.** Transcription uses `mlx-whisper`, rendering uses VideoToolbox, and QA uses Apple Vision OCR.
 - [Claude Code](https://claude.com/claude-code), signed in. Opus 5.5 at medium effort works well.
-- Python 3.9+, plus Xcode Command Line Tools (`xcode-select --install`) so `video-qa` can build its OCR helper.
-- `ffmpeg` on your PATH for the review app and QA: `brew install ffmpeg`. The editing skill installs its own copy in each project.
-- `mlx-whisper` for the review app's transcripts and QA: `pipx install --python python3.13 mlx-whisper`. Plain `pip3 install` fails on Homebrew's Python, and Python 3.15 isn't supported by its dependencies yet.
+- Python 3.9+
+- Xcode Command Line Tools
+- `ffmpeg`
+- `mlx-whisper`
 - Optional: Google Drive and Notion MCPs, if your footage and briefs live there. A local folder and pasted text work too.
 
 ## Install
@@ -44,7 +45,7 @@ Open your Terminal. Check if you have Homebrew installed by typing this command 
 brew --version
 ```
 
-If you don't have Homebrew installed, enter this command and go through the Homebrew installation process. It might ask you y/n questions during installation.
+If you don't have Homebrew installed, enter this command and go through the Homebrew installation process. It might ask you yes/no questions during installation.
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
@@ -54,7 +55,7 @@ Next, install FFMPEG by entering this command in the Terminal.
 brew install ffmpeg
 ```
 
-Clone the repo into your Documents folder by entering this in your Terminal.
+Clone this repo into your Documents folder by entering this in your Terminal.
 ```bash
 cd ~/Documents
 mkdir claude-resources
@@ -62,13 +63,19 @@ cd claude-resources
 git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
 ```
 
-Start a new Claude Code session in the Claude desktop app. Choose the repo folder you just downloaded at:
+Start a new Claude Code session in the Claude desktop app. Choose the repo folder you just downloaded. It should be located on your computer at:
 
 **Documents/claude-resources/superbolt-agentic-video-editing**
 
 Say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
 
+---
 **Manual Install (if you don't want to do the easy install):**
+
+- Install Python 3.9+, 
+- Install Xcode Command Line Tools (`xcode-select --install`) so `video-qa` can build its OCR helper.
+- Install `ffmpeg` on your PATH for the review app and QA: `brew install ffmpeg`. The editing skill installs its own copy in each project.
+- Install `mlx-whisper` for the review app's transcripts and QA: `pipx install --python python3.13 mlx-whisper`. Plain `pip3 install` fails on Homebrew's Python, and Python 3.15 isn't supported by its dependencies yet.
 
 ```bash
 git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
@@ -81,7 +88,7 @@ Keep the three skill folders side by side: they find each other, the standards f
 ## Use it
 
 1. **Edit.** In Claude Code: *"Edit this ad. Brief: <Notion link or pasted script>. Footage: <Drive folder link or local folder>."* `/ve-video-edit-general` cuts variation A, runs `/video-qa` and drops it into the review app.
-2. **Review.** Run `python3 ~/.claude/skills/apply-notes/scripts/review_server.py` and open http://localhost:8765. Watch the cut and leave notes at the playhead.
+2. **Review.** Ask Claude to start the review server in a browser. Or start it manually by entering in the Terminal `python3 ~/.claude/skills/apply-notes/scripts/review_server.py` and open http://localhost:8765. Watch the cut and leave notes at the playhead.
 3. **Apply notes.** Click **Apply notes** in the app, or tell Claude *"apply notes on ACM08"*. It renders v2 and replies on each note.
 4. **Approve and build variations.** Once A is approved, click **Build variations** to get hooks B, C and D cut from the approved A.
 
