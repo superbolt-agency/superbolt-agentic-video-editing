@@ -54,9 +54,21 @@ Next, install FFMPEG by entering this command in the Terminal.
 brew install ffmpeg
 ```
 
-Open this folder in Claude Code (the desktop app works) and say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
+Clone the repo into your Documents folder by entering this in your Terminal.
+```bash
+cd ~/Documents
+mkdir claude-resources
+cd claude-resources
+git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
+```
 
-**Manual Install:**
+Start a new Claude Code session in the Claude desktop app. Choose the repo folder you just downloaded at:
+
+**Documents/claude-resources/superbolt-agentic-video-editing**
+
+Say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
+
+**Manual Install (if you don't want to do the easy install):**
 
 ```bash
 git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
