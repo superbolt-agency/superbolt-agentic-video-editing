@@ -30,10 +30,14 @@ When a note states a general rule ("don't cut people off before the end of a sen
 - [Claude Code](https://claude.com/claude-code), signed in. Opus 5.5 at medium effort works well.
 - Python 3.9+, plus Xcode Command Line Tools (`xcode-select --install`) so `video-qa` can build its OCR helper.
 - `ffmpeg` on your PATH for the review app and QA: `brew install ffmpeg`. The editing skill installs its own copy in each project.
-- `mlx-whisper` for the review app's transcripts and QA: `pip3 install mlx-whisper`.
+- `mlx-whisper` for the review app's transcripts and QA: `pipx install --python python3.13 mlx-whisper`. Plain `pip3 install` fails on Homebrew's Python, and Python 3.15 isn't supported by its dependencies yet.
 - Optional: Google Drive and Notion MCPs, if your footage and briefs live there. A local folder and pasted text work too.
 
 ## Install
+
+**Easiest:** install Homebrew and ffmpeg, open this folder in Claude Code (the desktop app works) and say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
+
+**By hand:**
 
 ```bash
 git clone https://github.com/real-simple-labs/agentic-video-editing.git

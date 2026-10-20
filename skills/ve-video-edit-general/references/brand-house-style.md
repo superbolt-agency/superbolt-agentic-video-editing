@@ -7,3 +7,4 @@ Add a row the first time a reviewer corrects a name. **Code** is the prefix of y
 | Brand | Code | House form (exactly as written) | Corrected from | Market |
 | --- | --- | --- | --- | --- |
 | AcmeSleep | ACM | AcmeSleep, acmesleep.com | Acme Sleep, acme sleep | US |
+| Sarah Creal Beauty | SCB | Sarah Creal, Sarah Creal Beauty, sarahcrealbeauty.com, Eyes Up, Face Flex | Sarah Creel, Sarah Creole, Cerakriel | US |

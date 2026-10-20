@@ -16,7 +16,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 HERE = Path(__file__).resolve().parent
 DEFAULT_ROOT = Path(os.environ.get("REVIEW_ROOT", "~/Video Edits")).expanduser()
 FF_DIRS = [Path(p).expanduser() for p in [os.environ.get("FFMPEG_DIR")] if p]   # optional extra folder holding ffmpeg/ffprobe
-WHISPER = Path(os.environ.get("MLX_WHISPER") or shutil.which("mlx_whisper") or Path.home() / "Library/Python/3.9/bin/mlx_whisper")
+WHISPER = Path(os.environ.get("MLX_WHISPER") or shutil.which("mlx_whisper") or next((p for p in [Path.home() / ".local/bin/mlx_whisper", Path("/opt/homebrew/bin/mlx_whisper")] if p.exists()), Path.home() / "Library/Python/3.9/bin/mlx_whisper"))  # pipx installs to ~/.local/bin
 WHISPER_MODEL = "mlx-community/whisper-large-v3-turbo"
 SKIP_DIRS = {"Media", "Raw", "Ref", "Projects", "Review", "Audio", "Transcripts", "Photos", "parts", "qa", "audio", "sheets", "proxies", "venv"}
 

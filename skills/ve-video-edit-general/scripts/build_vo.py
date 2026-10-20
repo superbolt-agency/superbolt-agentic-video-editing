@@ -46,7 +46,7 @@ segments, words_out, lines_out, t = [], [], [], 0.0
 for L in plan["lines"]:
     take, ws, we = L["take"], L["start"], L["end"]
     a, sr = load(take); e, hop = envelope(a, sr)
-    thr = max(0.012, float(np.percentile(e, 30)) * 3)
+    thr = max(plan.get("edge_floor", 0.012), float(np.percentile(e, 30)) * 3)   # lower edge_floor for quietly recorded takes whose word tails fall under it
     tx = json.load(open(f"tx/{take}.json"))
     allw = [w for s in tx["segments"] for w in s["words"]]
     drops = sorted(tuple(d) for d in L.get("drop", []))   # stumbles to cut out, in source seconds (set from the energy, not whisper)
@@ -66,7 +66,7 @@ for L in plan["lines"]:
         else:
             prev = chunks[ci - 1][-1]["end"]
             s = max(quietest(e, hop, prev + 0.05, ch[0]["start"]) - GAP_KEEP / 2, prev + 0.04)
-        if ci == len(chunks) - 1: en = min(offset(e, hop, ch[-1]["end"], thr), max(next_start - 0.03, ch[-1]["end"] + 0.02))
+        if ci == len(chunks) - 1: en = min(offset(e, hop, ch[-1]["end"], thr) + L.get("end_pad", 0), max(next_start - 0.03, ch[-1]["end"] + 0.02))   # end_pad: extend a soft word tail (e.g. a trailing "s") the energy read misses
         else:
             nxt = chunks[ci + 1][0]["start"]
             en = min(quietest(e, hop, ch[-1]["end"] + 0.05, nxt) + GAP_KEEP / 2, nxt - 0.04)

@@ -110,6 +110,7 @@ cd "$W" && ./venv/bin/python $SK/scripts/validate_plan.py
 ```
 - `build_vo.py` assembles the takes, tightens pauses, applies the speed lift, then re-transcribes the result and diffs it against the script.
 - Any missing or garbled word means a clipped edge or a muddy take: swap the take or adjust `start`/`end`. You can't listen, so this re-transcription is your ears.
+- If the last word of a line keeps coming back changed or cut short ("traveling" → "trapped", "formulas" → "formula") however you set `end`, the take is recorded quietly and the loudness read is trimming the word's tail. Use `edge_floor` and then `end_pad` (field notes in `references/plan-format.md`). To confirm a single word, cut that stretch of the final audio and transcribe it alone.
 - Repeated or extra words in the diff mean a stumble survived: add a `drop` (rule 2). Ambiguous spots (a transcriber mishearing a word only in context) are worth re-checking: cut that line's audio alone and transcribe it with an `initial_prompt` of fillers ("Um, uh, I- I, no, now we") so repeats show up.
 - Clear every `LOOSE PAUSES` entry (rule 3).
 - Fix every validator error. Read its shot table: for each b-roll row, ask whether a viewer who hears that line and sees that footage would think the edit matches.

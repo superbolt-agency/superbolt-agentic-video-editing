@@ -12,6 +12,7 @@ One file drives the whole edit. `build_vo.py` reads `lines`, `validate_plan.py` 
   "fix_words": {"acme sleep": "AcmeSleep"},   // spelling fixes applied to caption words
   "captions": true,
   // pacing (defaults shown): gap_max 0.20, gap_keep 0.10, line_gap 0.05; min_shot 0.30 = shortest picture piece allowed
+  // "edge_floor": 0.012 (default) = loudness floor for finding where speech starts/ends; lower it for quiet takes (see field notes)
 
   // One entry per script line, in script order. These are the ONLY places a cut can happen.
   "lines": [
@@ -22,6 +23,9 @@ One file drives the whole edit. `build_vo.py` reads `lines`, `validate_plan.py` 
      "drop": [[28.17, 28.66]]}
     // drop = stumbles to cut out of the take, in source seconds (here the repeated "now we"). Set them from a 10ms
     // energy read at real silences, not from whisper times. Caption words for a line with drops come from "text".
+    ,{"id": "L11", "text": "I was hacking even my own formulas.", "take": "body3", "start": 28.46, "end": 33.74,
+     "end_pad": 0.12}
+    // end_pad = extra seconds kept after the detected end of the line, for a soft last sound (a trailing "s") that got clipped
   ],
 
   // Shots cover the lines in order; each shot = one or more WHOLE consecutive lines.
@@ -60,4 +64,8 @@ One file drives the whole edit. `build_vo.py` reads `lines`, `validate_plan.py` 
 - **Callout claims** must come from the brief.
 - **`"hook": true`** marks the hook text overlay. Every plan needs one covering the first line (`validate_plan.py` R5). It says what the voice isn't saying (premise, category, tension, POV), and captions stay hidden until it leaves. Keep it on screen only for the hook, unless it's a POV/premise headline meant to run longer: say which in the hand-off.
 - **`caption_case`**: `"sentence"` (default) capitalises sentence starts and lowercases a line that continues a sentence after a cut; `"lower"` for all-lowercase organic; `"upper"` for the old ALL CAPS look. Words in `fix_words` values, "I", and words with internal capitals (AcmeSleep, iPhone) are never re-cased. A proper noun that starts a line mid-sentence would be lowercased, so add it to `fix_words`.
+- **Clipped line edges (`edge_floor`, `end_pad`).** `build_vo.py` ignores the exact `end` you write: it finds where the speech really stops by reading the audio's loudness, and cuts there. On quietly recorded takes (a clip-on mic, low gain) the soft end of a word sits below the loudness floor and gets cut, so the re-transcription shows a missing or changed last word ("traveling" heard as "trapped", "formulas" as "formula"). Fix it in this order:
+  1. Set `"edge_floor": 0.006` at the top of the plan (about −44 dB instead of −38 dB). This fixes every line of a quiet shoot at once. Check the `LOOSE PAUSES` list afterwards, since a lower floor can also keep a little more silence at line edges.
+  2. If one line is still clipped, add `"end_pad": 0.08`–`0.15` to that line.
+  3. Moving `end` later only helps if the transcript's word timing was wrong; it doesn't override the loudness read.
 - **`fix_words`**: load the brand's row from `brand-house-style.md` in this folder (house names, URLs) before rendering.
