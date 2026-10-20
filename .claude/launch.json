@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "review-app",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "exec python3 skills/apply-notes/scripts/review_server.py --port 8765"],
+      "port": 8765
+    }
+  ]
+}

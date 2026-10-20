@@ -23,6 +23,23 @@ Run each check; act only if it fails.
 | 7 | `~/.local/bin/mlx_whisper --help` | `pipx install --python /opt/homebrew/bin/python3.13 mlx-whisper`. Never `pip3 install` into Homebrew's Python. |
 | 8 | Skills installed: `ls ~/.claude/skills/ve-video-edit-general/SKILL.md ~/.claude/skills/apply-notes/SKILL.md ~/.claude/skills/video-qa/SKILL.md` | `mkdir -p ~/.claude/skills && cp -R <this folder>/skills/* ~/.claude/skills/`. If they already exist, ask before replacing them: the installed `video-editing-standards.md` may hold rules learned from their review notes. Back up the old folders first (`mv ~/.claude/skills/<name> ~/.claude/skills/<name>.bak-<date>`). |
 | 9 | Projects folder: `ls -d ~/"Video Edits"` | `mkdir -p ~/"Video Edits"` |
+| 10 | Review-app launcher: `ls ~/"Video Edits"/.claude/launch.json` | Write `~/Video Edits/.claude/launch.json` with the contents below. It lets Claude open the review app in the desktop app's browser panel when a session is opened on `~/Video Edits`. If the file already exists with other configurations, add this one to its `configurations` list instead of replacing it. |
+
+Contents for step 10 (it uses `$HOME`, so it works unchanged on any Mac):
+
+```json
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "review-app",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "exec python3 \"$HOME/.claude/skills/apply-notes/scripts/review_server.py\" --port 8765"],
+      "port": 8765
+    }
+  ]
+}
+```
 
 ## Test it
 
@@ -36,7 +53,7 @@ Run each check; act only if it fails.
 ## Hand-off to the person
 
 Tell them, in plain words:
-- Setup is done. **Start a new session** so Claude picks up the new skills (skills load when a session starts).
+- Setup is done. **Start a new session** so Claude picks up the new skills (skills load when a session starts). Open it on the **Video Edits** folder in their home folder: that's where their edits live and where the review app opens from.
 - To edit: open a new session and say *"Edit this ad. Brief: <Google Doc link or pasted text>. Footage: <Drive folder link or a folder on this Mac>."*
 - Footage from Drive downloads directly only when the files are shared as "anyone with the link". Otherwise, they should download the folder to their Mac first (or use Google Drive for desktop) and give Claude that folder.
-- To review a cut, ask Claude to "open the review app". Claude starts it (`python3 ~/.claude/skills/apply-notes/scripts/review_server.py`, run in the background), and they open http://localhost:8765 in their browser.
+- To review a cut, ask Claude to "open the review app". In a session on `~/Video Edits`, Claude starts the `review-app` configuration from step 10 and the app opens in the browser panel beside the chat. In any other folder, Claude runs `python3 ~/.claude/skills/apply-notes/scripts/review_server.py` as a background command and they open http://localhost:8765 in their browser. Either way the app stops when that session ends; asking again restarts it. Only one copy can run at a time, so if port 8765 is busy, check whether the app is already open before starting another.
