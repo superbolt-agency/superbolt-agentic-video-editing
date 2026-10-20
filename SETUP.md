@@ -21,9 +21,47 @@ Run each check; act only if it fails.
 | 5 | A compatible Python: `/opt/homebrew/bin/python3.13 --version` (3.10 to 3.14 all work) | `brew install python@3.13`. **Don't use plain `python3`:** Homebrew's default is now 3.15, and mlx-whisper's dependencies (torch) don't support 3.15 yet. That's the cause of "requirements are unsatisfiable … cp315" and "externally-managed-environment" errors. |
 | 6 | `pipx --version` | `brew install pipx && pipx ensurepath` |
 | 7 | `~/.local/bin/mlx_whisper --help` | `pipx install --python /opt/homebrew/bin/python3.13 mlx-whisper`. Never `pip3 install` into Homebrew's Python. |
-| 8 | Skills installed: `ls ~/.claude/skills/ve-video-edit-general/SKILL.md ~/.claude/skills/apply-notes/SKILL.md ~/.claude/skills/video-qa/SKILL.md` | `mkdir -p ~/.claude/skills && cp -R <this folder>/skills/* ~/.claude/skills/`. If they already exist, ask before replacing them: the installed `video-editing-standards.md` may hold rules learned from their review notes. Back up the old folders first (`mv ~/.claude/skills/<name> ~/.claude/skills/<name>.bak-<date>`). |
+| 8 | Skills installed **and up to date** with this folder's `skills/`. Checking that they exist isn't enough: people who tried an earlier version of these skills may have old copies that are missing fixes. | Follow "Step 8 in detail" below. |
 | 9 | Projects folder: `ls -d ~/"Video Edits"` | `mkdir -p ~/"Video Edits"` |
 | 10 | Review-app launcher: `ls ~/"Video Edits"/.claude/launch.json` | Write `~/Video Edits/.claude/launch.json` with the contents below. It lets Claude open the review app in the desktop app's browser panel when a session is opened on `~/Video Edits`. If the file already exists with other configurations, add this one to its `configurations` list instead of replacing it. |
+
+### Step 8 in detail: install or update the skills
+
+`<repo>` below is this folder (the one holding `SETUP.md`). The skills are `ve-video-edit-general`, `apply-notes` and `video-qa`.
+
+**a. Move stray backups out of the skills folder.** Claude loads every folder in `~/.claude/skills` that has a `SKILL.md`, so a backup kept there (e.g. `ve-video-edit-general.bak-2026-10-01`, from older instructions) loads as a duplicate copy of the old skill. Move any such folder into `~/.claude/skills-backups/`.
+
+**b. Compare.** For each skill:
+
+```bash
+diff -rq "<repo>/skills/<skill>" ~/.claude/skills/<skill> -x __pycache__ -x .DS_Store -x textscan -x video-editing-standards.md -x brand-house-style.md
+```
+
+`textscan` and `__pycache__` are built on the Mac when the skills run, so they're ignored. The two reference files are compared separately in step d, because they're supposed to differ once the person has used the skills.
+
+- No output for any of the three skills: the code is current. Go to step d.
+- A skill folder is missing: copy it in (`mkdir -p ~/.claude/skills && cp -R "<repo>/skills/<skill>" ~/.claude/skills/`).
+- Any other difference: the installed copy is an older or modified version. Do step c.
+
+**c. Back up, then replace.** Tell the person in one sentence that an older version of the video-editing skills was found and you're replacing it with the current one, keeping a backup. Then, for the three skills together (replace all three even if only one differs, since they're built to work as a set):
+
+```bash
+B=~/.claude/skills-backups/$(date +%Y-%m-%d-%H%M) && mkdir -p "$B" && for s in ve-video-edit-general apply-notes video-qa; do [ -d ~/.claude/skills/$s ] && mv ~/.claude/skills/$s "$B/"; cp -R "<repo>/skills/$s" ~/.claude/skills/; done && echo "$B"
+```
+
+Re-run the comparison in step b; it should print nothing. Then do step d against the backup in `$B`.
+
+**d. Merge the two learned files.** `ve-video-edit-general/references/video-editing-standards.md` (the editing rulebook) and `ve-video-edit-general/references/brand-house-style.md` (brand spellings) grow as the person uses the review app: "Apply notes" adds general rules from review notes to the rulebook, with a dated entry in its section 12 revision log, and adds corrected brand names to the brand table. Never let an update throw those away. Compare the person's copy (the backup from step c, or the installed copy if nothing was replaced) with `<repo>`'s:
+
+- Identical: nothing to do.
+- Rulebook: keep the repo's version, then carry over everything the person's copy has that the repo's doesn't. That means revision-log entries and the rule changes those entries describe. Text that only differs because it's an older wording of the original rules takes the repo's version.
+- Brand table: keep every row from both. Where both have a row for the same brand, merge the spellings.
+- If you can't tell whether a difference is something they learned or just old text, show the person the two versions in plain words and ask.
+- Write the merged files into `~/.claude/skills/ve-video-edit-general/references/`. Tell the person what you carried over, in a sentence (e.g. "kept your 3 house rules and 2 brand spellings").
+
+**e. New sessions only.** Sessions that were already open keep the skills they started with. Include this in the hand-off.
+
+Re-run step 8 whenever this folder's skills are updated: it's also how the person gets new versions without losing their learned rules.
 
 Contents for step 10 (it uses `$HOME`, so it works unchanged on any Mac):
 
