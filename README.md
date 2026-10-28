@@ -38,8 +38,6 @@ When a note states a general rule ("don't cut people off before the end of a sen
 
 ## Install
 
-**Easy Install:** 
-
 Get the Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en). Sign in with your Superbolt account. You can skip the step where you need to sync your local folders, it's not necessary.
 
 Open your Terminal (Mac / Applications / Utilities / Terminal). Check if you have Homebrew installed by typing this command and pressing enter.
@@ -72,29 +70,20 @@ Start a new Claude Code session in the Claude desktop app. Choose the repo folde
 Say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
 
 ---
-**Manual Install (if you don't want to do the easy install for some reason):**
-
-- Install Python 3.9+, 
-- Install Xcode Command Line Tools (`xcode-select --install`) so `video-qa` can build its OCR helper.
-- Install `ffmpeg` on your PATH for the review app and QA: `brew install ffmpeg`. The editing skill installs its own copy in each project.
-- Install `mlx-whisper` for the review app's transcripts and QA: `pipx install --python python3.13 mlx-whisper`. Plain `pip3 install` fails on Homebrew's Python, and Python 3.15 isn't supported by its dependencies yet.
-
-```bash
-git clone https://github.com/superbolt-agency/superbolt-agentic-video-editing.git
-mkdir -p ~/.claude/skills
-cp -R agentic-video-editing/skills/* ~/.claude/skills/
-```
-
-Keep the three skill folders side by side: they find each other, the standards file and the brand list by relative path.
 
 ## Use it
 
-1. **Edit.** In Claude Code: *"Edit this ad. Brief: <Notion link or pasted script>. Footage: <Drive folder link or local folder>."* `/ve-video-edit-general` cuts variation A, runs `/video-qa` and drops it into the review app.
-2. **Review.** Ask Claude to start the review server in a browser. Or start it manually by entering in the Terminal `python3 ~/.claude/skills/apply-notes/scripts/review_server.py` and open http://localhost:8765. Watch the cut and leave notes at the playhead.
-3. **Apply notes.** Click **Apply notes** in the app, or tell Claude *"apply notes on ACM08"*. It renders v2 and replies on each note.
-4. **Approve and build variations.** Once A is approved, click **Build variations** to get hooks B, C and D cut from the approved A.
+Start a new Claude Code session in the desktop app and choose the **Video Edits** folder in your home folder (setup creates it). That's where your edits live, and it's where the review app can open right beside the chat.
 
-Projects live in `~/Video Edits/<CODE>/` (set `REVIEW_ROOT` to change it). Finished cuts go in `Exports/<CODE>_Hook<X>_v<N>.mp4`.
+1. **Edit.** Say *"Edit this ad. Brief: <Google Doc or Notion link, or pasted script>. Footage: <Google Drive folder link or a folder on your Mac>."* Private team Drive folders work through the Google Drive desktop app. To pick the project's name, add it (e.g. *"call it SCB02"*); use the same letters for every project of a client. `/ve-video-edit-general` cuts variation A, runs `/video-qa` and drops it into the review app.
+2. **Review.** Say *"open the review app"*. Claude starts it in the browser panel beside the chat. In a session on another folder, it runs in the background instead: open http://localhost:8765 in your browser. If it isn't running when you come back, ask again. Watch the cut and leave notes at the playhead.
+3. **Apply notes.** Click **Apply notes** in the app, or tell Claude *"apply notes on SCB02"*. It renders v2 and replies on each note.
+4. **Approve and build variations.** Once A is approved, click **Build variations** to get hooks B, C and D cut from the approved A.
+5. **Put it on Google Drive.** Say *"upload SCB02 to the drive"* (any wording works). The first time for a client, Claude asks for the link to the Drive folder to use (open the folder in Drive in your browser and copy the address bar). Each project goes in its own subfolder, named after the project unless you choose another name. Claude uploads the latest approved version of each hook, never overwrites anything already in Drive, and sends you links once Google has the files. Later projects for the same client go to the same folder; Claude asks before switching to a different client's folder. **The Google Drive desktop app must be open for this step**.
+
+**Auto Updates.** Once a day, when you start an edit, a review or an upload, Claude checks this repository on GitHub for a newer version. If there is one, it tells you what changed and asks before updating. Updating keeps the house rules and brand spellings your reviews have added. New versions apply from your next new session.
+
+Projects live in `~/Video Edits/<CODE>/` (set `REVIEW_ROOT` to change it). Finished cuts go in `Exports/<CODE>_Hook<X>_v<N>.mp4`, and stay there after they're uploaded.
 
 ## Make it yours
 

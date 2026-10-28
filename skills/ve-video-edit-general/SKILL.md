@@ -1,6 +1,6 @@
 ---
 name: ve-video-edit-general
-description: Edit raw footage into a finished vertical ad (UGC / creator / b-roll + voiceover) from a script or concept brief — pick the best take of every line, tighten the VO, cut A-roll and relevant b-roll strictly on line boundaries, burn captions and callouts, and export a Meta/TikTok-ready 9:16 MP4. Use whenever the user shares raw files (Google Drive folder, local folder, Frame.io) plus a script/brief (Notion page, doc, pasted text) and asks for an edit, a cut, a video ad, a re-cut, a v2, a cutdown or hook variants — even if the request is just "put this together" or "edit this concept".
+description: Edit raw footage into a finished vertical ad (UGC / creator / b-roll + voiceover) from a script or concept brief — pick the best take of every line, tighten the VO, cut A-roll and relevant b-roll strictly on line boundaries, burn captions and callouts, and export a Meta/TikTok-ready 9:16 MP4. Use whenever the user shares raw files (Google Drive folder, local folder, Frame.io) plus a script/brief (Notion page, doc, pasted text) and asks for an edit, a cut, a video ad, a re-cut, a v2, a cutdown or hook variants — even if the request is just "put this together" or "edit this concept". Also use it when the user asks whether the video-editing skills are up to date or to check for or install an update to them ("check for updates", "update the video editing skills").
 ---
 
 # VE Video Edit (General)
@@ -73,6 +73,7 @@ Run `bash $SK/scripts/check_updates.sh`. It checks GitHub at most once a day and
 - `INSTALLED COPY OUT OF DATE`: same, without the pull: SETUP.md step 8.
 - `UP TO DATE`, `SKIPPED` or `CAN'T CHECK`: carry on without mentioning it. (For `CAN'T CHECK`, mention it once only if it says the source folder is missing.)
 - In a headless run (started by the review app's buttons), skip this step.
+- **When the person asks about updates themselves** ("check for updates", "are my video editing skills up to date?", "update the skills"), run it with `--now` so the once-a-day limit doesn't skip it, and report every result in plain words, `UP TO DATE` and `CAN'T CHECK` included. Handle `UPDATE AVAILABLE` as above. If they asked to update, they've already said yes, so don't ask again. That's the whole request: don't start an edit.
 
 ### 1. Gather inputs
 - **Script/brief:** fetch it (e.g. a Notion page through the Notion MCP, a Google Doc, or pasted text). Split the script into lines exactly as written; those are your cut points. Note the filming notes, product claims and offer.
