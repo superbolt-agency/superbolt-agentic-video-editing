@@ -52,8 +52,9 @@ The script writes two images per video into `<dir>/.qa/<stem>/`: `hook.jpg` (the
 2. **B-roll (6.1–6.5):** each insert literally shows what's being said; best clip available (not dark, blurry, crooked or dull); no mirrored text; clean background and edges; the person matches the script's persona, and it's the same creator on "I" lines.
 3. **Competitor branding (11.3):** logos, labels, shop signs, clothing.
 4. **Text (8.2, 8.3, 8.5, 7.7):** legible on busy footage; lists complete and consistent; numbers on screen match the voice and the brief; caption colour consistent.
-5. **Style (2):** organic stayed organic (no music, end card, transitions, SFX, stock), nothing produced mixed in; or, for a style skill, its own rules (the skill lists the sections it overrides).
-6. **OCR findings:** open the frame for any `caption mismatch` or `safe zone` warning from OCR and confirm it before keeping it.
+5. **Style (2):** organic stayed organic (no music, end card, transitions, SFX, stock), nothing produced mixed in; or, for a style skill, its own rules (the skill lists the sections it overrides). Where the client's creative context requires something produced (e.g. a template end card), that isn't a finding.
+6. **Client creative context:** if the project has `<CODE>/client-creative.md`, check the on-screen text and footage against each rule in it: wording and claims, product and shade names, required copy, amount and style of text, footage preferences. Cite the rule ("client context: launch ads say NEW, not 'just launched'") instead of a rulebook number. Skip rules the file marks as overridden by the person or left for the Premiere finish.
+7. **OCR findings:** open the frame for any `caption mismatch` or `safe zone` warning from OCR and confirm it before keeping it.
 
 Post what you find with the apply-notes helper, one note per issue, at the timestamp from the sheet:
 

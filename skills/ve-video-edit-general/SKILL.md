@@ -11,6 +11,8 @@ Turn raw takes + a script into a finished ad. The output is a 1080×1920 MP4 wit
 
 Before planning any edit, read `references/video-editing-standards.md` in full. It is the one source of truth for pacing, cuts, footage, captions, on-screen text, audio, end cards and variations; this skill doesn't repeat it. Rules tagged `cut` are yours to apply while editing. Then load the brand's row from `references/brand-house-style.md` into the plan's `fix_words` (add a row if the brand isn't there yet).
 
+Then load the client's creative context (step 1). **Order of precedence:** what the person tells you (in chat or in the brief they give you) beats the client's stored creative context, which beats this skill's and the rulebook's defaults. For example, a client whose guidelines require an end card on video ads gets one even though organic edits default to none; but if the person says "no end card on this one", there's no end card.
+
 The defaults that matter most:
 - **Organic by default:** no music, no end card, no transitions or sound effects, no stock, lowercase on-screen copy. Produced elements only when the brief asks, and never mixed with organic ones.
 - **Every video gets a hook text overlay** that isn't the captions (`"hook": true` callout on the first line; `validate_plan.py` R5 refuses a plan without one). Captions are hidden while it's on screen and start when it leaves; `render.py` does this.
@@ -78,6 +80,11 @@ Run `bash $SK/scripts/check_updates.sh`. It checks GitHub at most once a day and
 ### 1. Gather inputs
 - **Script/brief:** fetch it (e.g. a Notion page through the Notion MCP, a Google Doc, or pasted text). Split the script into lines exactly as written; those are your cut points. Note the filming notes, product claims and offer.
 - **Footage list (Google Drive):** with a Google Drive MCP, search the folder (`parentId = '<folder id>'`), recursing into subfolders. Write `list.txt` with one line per file: `<subdir> <file_id> <name.ext>`. For a local folder, copy or symlink the files into `$W/raw/` instead and skip `fetch_drive.sh`.
+- **Client creative context:** work out which client the ad is for (the brief, the footage folder or the project code's prefix; ask if it's unclear). Load the client's creative context with the client-context skill (the Superbolt Client Context connector: `get_client_context` with `creative`; also `brand` when the brief makes product claims, since it holds compliance notes). If the connector isn't available in this session, say so in one sentence and carry on with the brief and the rulebook.
+  - Pick out what affects a video edit: approved, retired or required wording and claims; product, shade and brand spellings; required copy (discounts, disclaimers, launch words); how much on-screen text and in what style; end cards, music, typography; footage preferences (e.g. cutaways during founder talking-head); anything not to show. Ignore what only concerns statics, briefs to creators or reporting.
+  - Write it to `$EDITS/<CODE>/client-creative.md` (choose the project code now, as step 7 describes, and create the folder): the client, today's date and the source's last-modified date, then one bullet per rule that applies to this edit, quoted or closely paraphrased, each followed by how you'll apply it: a plan field (`fix_words`, `accent`, `font`, `caption_case`), a callout's wording, a footage choice, or "can't do in this pipeline: flag for the Premiere finish" (e.g. an end card or typography built from the client's Figma templates). Revisions (`/apply-notes`, including headless runs that can't reach the connector) and `/video-qa` read this file.
+  - Add the client's product and brand spellings to its row in `references/brand-house-style.md`, so captions are corrected and QA checks them.
+  - Where the brief or the person's request contradicts the stored context, follow them, and note the contradiction in the file and the hand-off ("brief asks for X; client context says Y; followed the brief"). Don't stop to ask unless it's a compliance item (a retired claim, a required disclaimer): then confirm in one sentence before rendering.
 - **Inspo (optional):** if you have access to the brand's ad account or an ad-library tool, look at its top video ads from the last 90 days: hooks, caption use and opening visuals.
 
 ### 2. Set up and fetch
@@ -164,6 +171,7 @@ Keep it short. Include:
 - how long the hook overlay stays up and why (hook only, or the whole opener/video for a POV or premise headline);
 - for revisions, a per-variation checklist confirming each requested change on A, B, C and so on;
 - the planned B, C and D hooks (one line each), built once A is approved;
+- client creative context: which of the client's rules shaped the edit, any the person overrode, and any that couldn't be done here and need the Premiere finish (e.g. a template end card);
 - offered next steps (cutdown, 4:5).
 
 ## Gotchas
