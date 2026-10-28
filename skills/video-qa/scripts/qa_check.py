@@ -460,6 +460,9 @@ class QA:
                     for m in re.finditer(r"(?<![\w.])" + re.escape(f) + r"(?![\w])", txt, re.I):
                         if m.group(0) != f and not (txt.isupper() and not f.isupper()):   # ALL CAPS text is flagged once under 7.5
                             flag(t, "7.2", "brand name", f"\"{m.group(0)}\" should be \"{f}\" at {clock(t)}")
+                for bad in [b.strip() for b in re.split(r"[;,]", brand.get("corrected from", "")) if b.strip()]:   # known misspellings
+                    for m in re.finditer(r"(?<![\w.])" + re.escape(bad) + r"(?![\w])", txt, re.I):
+                        flag(t, "7.2", "brand name", f"\"{m.group(0)}\" is a known misspelling (house form: {', '.join(house_forms(brand)[:2])}) at {clock(t)}")
                 mk = brand.get("market", "")
                 if mk.startswith("US") or mk.startswith("UK"):
                     for us, uk in US_UK:

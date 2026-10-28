@@ -1,6 +1,6 @@
 ---
 name: ve-video-edit-general
-description: Edit raw footage into a finished vertical ad (UGC / creator / b-roll + voiceover) from a script or concept brief — pick the best take of every line, tighten the VO, cut A-roll and relevant b-roll strictly on line boundaries, burn captions and callouts, and export a Meta/TikTok-ready 9:16 MP4. Use whenever the user shares raw files (Google Drive folder, local folder, Frame.io) plus a script/brief (Notion page, doc, pasted text) and asks for an edit, a cut, a video ad, a re-cut, a v2, a cutdown or hook variants — even if the request is just "put this together" or "edit this concept". Also use it when the user asks whether the video-editing skills are up to date or to check for or install an update to them ("check for updates", "update the video editing skills").
+description: Edit raw footage into a finished vertical ad (UGC / creator / b-roll + voiceover) from a script or concept brief — pick the best take of every line, tighten the VO, cut A-roll and relevant b-roll strictly on line boundaries, burn captions and callouts, and export a Meta/TikTok-ready 9:16 MP4 plus an editable Adobe Premiere Pro package (XML timeline, media, captions, graphics). Use whenever the user shares raw files (Google Drive folder, local folder, Frame.io) plus a script/brief (Notion page, doc, pasted text) and asks for an edit, a cut, a video ad, a re-cut, a v2, a cutdown or hook variants — even if the request is just "put this together" or "edit this concept". Also use it to make a Premiere package (XML) of an existing cut, and when the user asks whether the video-editing skills are up to date or to check for or install an update to them ("check for updates", "update the video editing skills").
 ---
 
 # VE Video Edit (General)
@@ -138,6 +138,13 @@ Fix and re-render as needed. Then deliver into the review app and run QA:
 - Pick a short project code for the ad (e.g. `ACM08`): the client's prefix plus the next free number, checked against the folders already in `$EDITS` so two projects never share a code. If the person gives the project a name, use theirs (letters, numbers and hyphens: it becomes the folder name and the start of every file name). The delivery skill uses the leading letters to recognise the client, so keep one prefix per client. Copy each export to `$EDITS/<CODE>/Exports/<CODE>_Hook<X>_v<N>.mp4` (get the path from `python3 $AN/scripts/notes.py next <CODE> <X>`; never overwrite). Beside each, copy that render's `plan.json` as `<stem>.plan.json` and `captions.ass` as `<stem>.captions.ass`: `/video-qa` checks captions exactly when they're there.
 - **Render variation A only** (`$EDITS/<CODE>/Exports/<CODE>_HookA_v1.mp4`, so the review app picks it up). Write the planned B, C and D hooks into the hand-off and `hooks-planned.md` in the project folder, but don't render them: they're built from the approved A cut by `/apply-notes` once the user approves A (standards 11.1).
 - Run `/video-qa` on the hooks of this version with `--post` (just A at v1). Fix every FAIL and re-render before handing over; leave warnings for the user unless they're quick fixes.
+- **Build the Premiere package for every export** (the team finishes edits in Premiere Pro, so this is the default deliverable; the MP4 is the review copy). Right after each render, while `edl.json` and `captions.ass` still belong to that cut:
+```bash
+cd "$W" && ./venv/bin/python $SK/scripts/premiere_xml.py "$EDITS/<CODE>/Premiere" plan.json <CODE>_Hook<X>_v<N>
+cd "$W" && PATH=$PWD/venv/bin:$PATH ./venv/bin/python $SK/scripts/check_premiere.py "$EDITS/<CODE>/Premiere/<CODE>_Hook<X>_v<N>/<CODE>_Hook<X>_v<N>.xml" plan.json
+```
+  The package is one folder per project: `README.txt`, `media/` (the source clips, APFS clones that take no extra disk) and a folder per cut with the timeline `.xml` (Final Cut Pro 7 XML, which Premiere opens with File > Import), captions `.srt`, headline PNGs and `_notes.txt`. The timeline runs at natural speed; the notes give the percentage that matches the MP4. `premiere_xml.py` refuses to run if `edl.json` or `captions.ass` came from a different plan: re-run `build_vo.py` and `render.py` on the plan first. Fix every `check_premiere.py` FAIL before handing over.
+- Only skip the package if the person explicitly wants just an MP4.
 - Hand off by pointing the user at the review app (`python3 $AN/scripts/review_server.py`, then http://localhost:8765), not by attaching files.
 
 ## Defaults
@@ -149,7 +156,7 @@ Fix and re-render as needed. Then deliver into the review app and run QA:
 
 ## Hand-off message
 Keep it short. Include:
-- the file;
+- the file, and the Premiere package (`$EDITS/<CODE>/Premiere/`), with what its `_notes.txt` says isn't carried over;
 - length and format;
 - a one-line structure summary;
 - footage gaps against the brief (shots asked for but not filmed, and lines kept on A-roll because nothing relevant existed);

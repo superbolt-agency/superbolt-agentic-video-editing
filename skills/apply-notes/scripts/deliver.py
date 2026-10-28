@@ -6,7 +6,10 @@ across a drive and can carry invisible trailing spaces. Files are copied, never 
 
   deliver.py show CODE                                  destination + what a delivery would copy (JSON)
   deliver.py set CODE --folder LINK_OR_ID [--subfolder NAME | --no-subfolder]
-  deliver.py run CODE [--file REL ...] [--wait 180]     copy approved cuts (or the given files) and confirm
+  deliver.py run CODE [--file REL ...] [--mp4] [--no-premiere] [--wait 180]
+                                                        copy approved cuts (or the given exports) and confirm.
+                                                        Default: each cut's Premiere package (Premiere/<cut>/ plus the
+                                                        media it uses, under <subfolder>/Premiere/); --mp4 adds the MP4.
   deliver.py resolve LINK_OR_ID [--hint PATH]           local folder for a Drive folder
   deliver.py clients                                    folders used before, by project-code prefix
 
@@ -15,6 +18,7 @@ Per project: <ROOT>/<CODE>/delivery.json (destination + delivery log).
 Per Mac: <ROOT>/_review/delivery-folders.json (which folder each client prefix, e.g. "SCB", went to last).
 """
 import argparse, ctypes, ctypes.util, filecmp, glob, json, os, re, shutil, sys, time
+from urllib.parse import unquote
 from collections import deque
 from pathlib import Path
 
@@ -137,17 +141,25 @@ def approved_files(p):
     return [h["latest"] for _, h in sorted(s["hooks"].items()) if h["status"] == "approved"]
 
 
+def delivered_keys(cfg):
+    return {(d.get("cut") or Path(d["file"]).stem, d.get("kind", "mp4")) for d in cfg.get("delivered", [])}
+
+
 def cmd_show(code):
     p = proj(code)
     cfg = load(p / "delivery.json", {})
     clients = load(CLIENTS, {})
-    out = {"code": code, "destination": None, "suggested": None, "approved": approved_files(p),
-           "delivered": [d["file"] for d in cfg.get("delivered", [])]}
+    done = delivered_keys(cfg)
+    appr = approved_files(p)
+    out = {"code": code, "destination": None, "suggested": None, "approved": appr,
+           "premiere_packages": sorted(d.name for d in (p / "Premiere").glob("*") if (d / f"{d.name}.xml").exists()),
+           "delivered": sorted(f"{c} ({k})" for c, k in done)}
     if cfg.get("folder"):
         out["destination"] = {"folder": cfg["folder"], "subfolder": cfg.get("subfolder")}
     elif prefix(code) in clients:
         out["suggested"] = {"prefix": prefix(code), **clients[prefix(code)]}
-    out["to_deliver"] = [f for f in out["approved"] if f not in out["delivered"]]
+    out["to_deliver"] = {"premiere": [f for f in appr if (Path(f).stem, "premiere") not in done],
+                         "mp4": [f for f in appr if (Path(f).stem, "mp4") not in done]}
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
@@ -185,11 +197,55 @@ def wait_id(path, wait):
     return None
 
 
-def cmd_run(code, files, wait):
+def copy_one(src, out, wait):
+    """Copy src to out on Drive without overwriting. Returns (status, drive_id, problem)."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists():
+        if out.stat().st_size == src.stat().st_size and filecmp.cmp(src, out, shallow=False):
+            status = "already there (identical)"
+        else:
+            return None, None, f"{out.name}: a different file with this name is already in the Drive folder; not overwritten"
+    else:
+        shutil.copyfile(src, out)
+        if not filecmp.cmp(src, out, shallow=False):
+            return None, None, f"{out.name}: copy doesn't match the original"
+        status = "copied"
+    fid = wait_id(out, wait)
+    return status, fid, None if fid else f"{out.name}: Drive hasn't picked it up after {wait}s (still uploading, or Drive for desktop is paused)"
+
+
+def package_files(p, name):
+    """(source, path inside Premiere/) for one cut's package: README, the cut's folder and the media its XML uses."""
+    pkg = p / "Premiere"; cut = pkg / name; xml = cut / f"{name}.xml"
+    if not xml.exists():
+        return None, f"{name}: no Premiere package (build it with premiere_xml.py into {pkg})"
+    out = [(pkg / "README.txt", Path("README.txt"))] if (pkg / "README.txt").exists() else []
+    out += [(f, f.relative_to(pkg)) for f in sorted(cut.rglob("*")) if f.is_file() and not f.name.startswith((".", "_"))]
+    for url in re.findall(r"<pathurl>file://localhost([^<]+)</pathurl>", xml.read_text()):
+        f = Path(unquote(url))
+        try:
+            rel = f.relative_to(pkg)
+        except ValueError:
+            return None, f"{name}: the timeline points outside its package ({f})"
+        if rel.parts[0] == "media" and (f, rel) not in out:
+            out.append((f, rel))
+    missing = [str(f) for f, _ in out if not f.exists()]
+    return (None, f"{name}: package files missing: {missing[:3]}") if missing else (out, None)
+
+
+def cmd_run(code, files, wait, kinds):
     p = proj(code)
     cfg = load(p / "delivery.json", {})
     if not cfg.get("folder"):
         sys.exit(f"No destination set for {code}. Ask which Drive folder to use, then: deliver.py set {code} --folder <link>")
+    if not kinds:
+        sys.exit("Nothing selected: drop --no-premiere or add --mp4.")
+    done = delivered_keys(cfg)
+    cuts = files or approved_files(p)
+    todo = [(rel, k) for rel in cuts for k in kinds if files or (Path(rel).stem, k) not in done]
+    if not todo:
+        sys.exit("Nothing to deliver: no approved version that hasn't been delivered already. "
+                 "Approve a version in the review app, or name the file with --file.")
     clients = load(CLIENTS, {})
     folder = resolve(cfg["folder"]["id"], [cfg["folder"].get("path")] + [c.get("path") for c in clients.values()])
     cfg["folder"]["path"] = str(folder)
@@ -204,35 +260,39 @@ def cmd_run(code, files, wait):
         sid = wait_id(dest, wait)
         if sid:
             cfg["subfolder_id"] = sid
-    todo = files or [f for f in approved_files(p) if f not in {d["file"] for d in cfg.get("delivered", [])}]
-    if not todo:
-        sys.exit("Nothing to deliver: no approved version that hasn't been delivered already. "
-                 "Approve a version in the review app, or name the file with --file.")
     results, problems = [], []
-    for rel in todo:
-        src = p / rel
-        if not src.is_file():
-            problems.append(f"{rel}: not found in the project"); continue
-        out = dest / src.name
-        if out.exists():
-            if out.stat().st_size == src.stat().st_size and filecmp.cmp(src, out, shallow=False):
-                status = "already there (identical)"
-            else:
-                problems.append(f"{src.name}: a different file with this name is already in the Drive folder; not overwritten"); continue
+    for rel, kind in todo:
+        name = Path(rel).stem
+        if kind == "mp4":
+            src = p / rel
+            if not src.is_file():
+                problems.append(f"{rel}: not found in the project"); continue
+            status, fid, prob = copy_one(src, dest / src.name, wait)
+            if prob: problems.append(prob)
+            if not status: continue
+            rec = {"cut": name, "kind": "mp4", "file": rel, "size": src.stat().st_size, "drive_id": fid,
+                   "link": f"https://drive.google.com/file/d/{fid}/view" if fid else None, "status": status}
         else:
-            shutil.copyfile(src, out)
-            if not filecmp.cmp(src, out, shallow=False):
-                problems.append(f"{src.name}: copy doesn't match the original"); continue
-            status = "copied"
-        fid = wait_id(out, wait)
-        rec = {"file": rel, "name": src.name, "size": src.stat().st_size, "dest": str(dest),
-               "drive_id": fid, "link": f"https://drive.google.com/file/d/{fid}/view" if fid else None,
-               "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "status": status}
+            parts, prob = package_files(p, name)
+            if prob:
+                problems.append(prob); continue
+            statuses, bad, size = [], False, 0
+            for src, r in parts:
+                st, fid, prob = copy_one(src, dest / "Premiere" / r, wait)
+                if prob:
+                    problems.append(f"Premiere/{r}: {prob.split(': ', 1)[-1]}")
+                    if not st: bad = True
+                if st: statuses.append(st); size += src.stat().st_size
+            if bad: continue
+            cut_id = drive_id(dest / "Premiere" / name)
+            rec = {"cut": name, "kind": "premiere", "file": f"Premiere/{name}", "files": len(parts), "size": size,
+                   "copied": statuses.count("copied"), "drive_id": cut_id,
+                   "link": f"https://drive.google.com/drive/folders/{cut_id}" if cut_id else None,
+                   "status": "copied" if "copied" in statuses else "already there (identical)"}
+        rec.update(dest=str(dest), at=time.strftime("%Y-%m-%dT%H:%M:%S"))
         results.append(rec)
-        cfg.setdefault("delivered", [])
-        cfg["delivered"] = [d for d in cfg["delivered"] if d["file"] != rel] + [rec]
-        if not fid:
-            problems.append(f"{src.name}: Drive hasn't picked it up after {wait}s (still uploading, or Drive for desktop is paused)")
+        cfg["delivered"] = [d for d in cfg.get("delivered", [])
+                            if (d.get("cut") or Path(d["file"]).stem, d.get("kind", "mp4")) != (name, kind)] + [rec]
     save(p / "delivery.json", cfg)
     print(json.dumps({"folder": cfg["folder"]["name"], "subfolder": cfg.get("subfolder"),
                       "subfolder_link": f"https://drive.google.com/drive/folders/{cfg['subfolder_id']}" if cfg.get("subfolder_id") else None,
@@ -248,12 +308,14 @@ def main():
     g = a.add_mutually_exclusive_group(); g.add_argument("--subfolder"); g.add_argument("--no-subfolder", action="store_true")
     a = sub.add_parser("run"); a.add_argument("code"); a.add_argument("--file", action="append", default=[])
     a.add_argument("--wait", type=int, default=180)
+    a.add_argument("--mp4", action="store_true", help="also deliver the MP4")
+    a.add_argument("--no-premiere", action="store_true", help="leave out the Premiere package")
     a = sub.add_parser("resolve"); a.add_argument("target"); a.add_argument("--hint")
     sub.add_parser("clients")
     a = ap.parse_args()
     if a.cmd == "show": cmd_show(a.code)
     elif a.cmd == "set": cmd_set(a.code, a.folder, a.subfolder, a.no_subfolder)
-    elif a.cmd == "run": cmd_run(a.code, a.file, a.wait)
+    elif a.cmd == "run": cmd_run(a.code, a.file, a.wait, ([] if a.no_premiere else ["premiere"]) + (["mp4"] if a.mp4 else []))
     elif a.cmd == "resolve": print(resolve(parse_id(a.target), [a.hint]))
     elif a.cmd == "clients": print(json.dumps(load(CLIENTS, {}), indent=2, ensure_ascii=False))
 

@@ -19,6 +19,9 @@ GAP_KEEP = plan.get("gap_keep", 0.10)
 LINE_GAP = plan.get("line_gap", 0.05)
 JOIN_GAP = 0.02   # between the pieces either side of a dropped stumble
 FIX = plan.get("fix_words", {})
+def fix(t):   # house spellings: whole words, any case ("creel" also catches "Creel"), punctuation kept
+    for k, v in FIX.items(): t = re.sub(r"(?<!\w)" + re.escape(k) + r"(?!\w)", v, t, flags=re.I)
+    return t
 
 def load(name):
     w = wave.open(f"audio/{name}.wav"); a = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768
@@ -91,12 +94,12 @@ for L in plan["lines"]:
         speech_t = lambda k: next(o + (k - c) for (p0, p1, o), c in zip(pmap, np.cumsum([0] + [q1 - q0 for q0, q1, _ in pmap])) if k <= c + (p1 - p0) + 1e-9)
         for x in toks:
             a_, acc = acc, acc + (len(x) + 1) / tot * span
-            for k, v in FIX.items(): x = x.replace(k, v)
+            x = fix(x)
             words_out.append({"line": L["id"], "w": x, "s": speech_t(a_), "e": speech_t(acc) - 0.02})
     else:
         for w in words:
             txt = w["word"].strip()
-            for k, v in FIX.items(): txt = txt.replace(k, v)
+            txt = fix(txt)
             words_out.append({"line": L["id"], "w": txt, "s": to_out(w["start"]), "e": to_out(w["end"])})
     lines_out.append({"line": L["id"], "t0": t_line, "t1": t})
     segments.append({"line": L["id"], "src": None, "dur": LINE_GAP, "t0": t}); t += LINE_GAP
