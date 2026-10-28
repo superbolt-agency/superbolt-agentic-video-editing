@@ -67,6 +67,13 @@ These come from reviewer notes on real edits. Rules 1, 3 and 4 have mechanical c
 
 Work in the session scratchpad. Every script runs from the workdir, so start each Bash call with `cd "$W" &&` (Bash cwd resets between calls). `$SK` is this skill's folder (e.g. `~/.claude/skills/ve-video-edit-general`). `$AN` is the apply-notes skill beside it (`$SK/../apply-notes`). `$EDITS` is the review app's projects folder: `$REVIEW_ROOT`, default `~/Video Edits`.
 
+### 0. Check for updates (chat sessions only)
+Run `bash $SK/scripts/check_updates.sh`. It checks GitHub at most once a day and changes nothing.
+- `UPDATE AVAILABLE`: tell the person in a sentence what's new (from the list it prints) and ask whether to update now. If yes: `git -C <the folder it names> pull --ff-only`, then SETUP.md step 8 from that folder (it backs up the old skills and keeps their learned rules). Carry on with this edit as it is; the update applies from their next new session, so say so.
+- `INSTALLED COPY OUT OF DATE`: same, without the pull: SETUP.md step 8.
+- `UP TO DATE`, `SKIPPED` or `CAN'T CHECK`: carry on without mentioning it. (For `CAN'T CHECK`, mention it once only if it says the source folder is missing.)
+- In a headless run (started by the review app's buttons), skip this step.
+
 ### 1. Gather inputs
 - **Script/brief:** fetch it (e.g. a Notion page through the Notion MCP, a Google Doc, or pasted text). Split the script into lines exactly as written; those are your cut points. Note the filming notes, product claims and offer.
 - **Footage list (Google Drive):** with a Google Drive MCP, search the folder (`parentId = '<folder id>'`), recursing into subfolders. Write `list.txt` with one line per file: `<subdir> <file_id> <name.ext>`. For a local folder, copy or symlink the files into `$W/raw/` instead and skip `fetch_drive.sh`.
@@ -127,7 +134,7 @@ Read `qa/final_sheet.jpg` and `qa/cuts.jpg`, which show the frames either side o
 - Total length is reasonable for the script.
 
 Fix and re-render as needed. Then deliver into the review app and run QA:
-- Pick a short project code for the ad (e.g. `ACM08`). Copy each export to `$EDITS/<CODE>/Exports/<CODE>_Hook<X>_v<N>.mp4` (get the path from `python3 $AN/scripts/notes.py next <CODE> <X>`; never overwrite). Beside each, copy that render's `plan.json` as `<stem>.plan.json` and `captions.ass` as `<stem>.captions.ass`: `/video-qa` checks captions exactly when they're there.
+- Pick a short project code for the ad (e.g. `ACM08`): the client's prefix plus the next free number, checked against the folders already in `$EDITS` so two projects never share a code. If the person gives the project a name, use theirs (letters, numbers and hyphens: it becomes the folder name and the start of every file name). The delivery skill uses the leading letters to recognise the client, so keep one prefix per client. Copy each export to `$EDITS/<CODE>/Exports/<CODE>_Hook<X>_v<N>.mp4` (get the path from `python3 $AN/scripts/notes.py next <CODE> <X>`; never overwrite). Beside each, copy that render's `plan.json` as `<stem>.plan.json` and `captions.ass` as `<stem>.captions.ass`: `/video-qa` checks captions exactly when they're there.
 - **Render variation A only** (`$EDITS/<CODE>/Exports/<CODE>_HookA_v1.mp4`, so the review app picks it up). Write the planned B, C and D hooks into the hand-off and `hooks-planned.md` in the project folder, but don't render them: they're built from the approved A cut by `/apply-notes` once the user approves A (standards 11.1).
 - Run `/video-qa` on the hooks of this version with `--post` (just A at v1). Fix every FAIL and re-render before handing over; leave warnings for the user unless they're quick fixes.
 - Hand off by pointing the user at the review app (`python3 $AN/scripts/review_server.py`, then http://localhost:8765), not by attaching files.

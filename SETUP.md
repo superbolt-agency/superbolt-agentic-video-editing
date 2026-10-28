@@ -24,6 +24,7 @@ Run each check; act only if it fails.
 | 8 | Skills installed **and up to date** with this folder's `skills/`. Checking that they exist isn't enough: people who tried an earlier version of these skills may have old copies that are missing fixes. | Follow "Step 8 in detail" below. |
 | 9 | Projects folder: `ls -d ~/"Video Edits"` | `mkdir -p ~/"Video Edits"` |
 | 10 | Review-app launcher: `ls ~/"Video Edits"/.claude/launch.json` | Write `~/Video Edits/.claude/launch.json` with the contents below. It lets Claude open the review app in the desktop app's browser panel when a session is opened on `~/Video Edits`. If the file already exists with other configurations, add this one to its `configurations` list instead of replacing it. |
+| 11 | Google Drive for desktop, for delivering cuts to shared folders: `ls -d ~/Library/CloudStorage/GoogleDrive-*` lists a folder for their work account, and it contains `My Drive` (and `Shared drives` if their team uses them). | Optional: skip it if they won't deliver to Drive, and say so. Otherwise they install it from https://www.google.com/drive/download/, open it and sign in with their work Google account. Leave its default "stream files" setting: files download only when opened, so a large shared drive doesn't fill the Mac. The first time Claude reads or writes a Drive folder, macOS may ask them to allow access; they click Allow. |
 
 ### Step 8 in detail: install or update the skills
 
@@ -59,7 +60,9 @@ Re-run the comparison in step b; it should print nothing. Then do step d against
 - If you can't tell whether a difference is something they learned or just old text, show the person the two versions in plain words and ask.
 - Write the merged files into `~/.claude/skills/ve-video-edit-general/references/`. Tell the person what you carried over, in a sentence (e.g. "kept your 3 house rules and 2 brand spellings").
 
-**e. New sessions only.** Sessions that were already open keep the skills they started with. Include this in the hand-off.
+**e. Record where the skills came from:** `echo "<repo>" > ~/.claude/skills/.video-editing-source` (the absolute path of this folder). The skills' update check reads it to see whether GitHub has a newer version; nobody needs a GitHub account for that, because the repository is public. If this folder isn't a `git clone` (e.g. it was downloaded as a zip), say that automatic update checks won't work and suggest cloning it instead.
+
+**f. New sessions only.** Sessions that were already open keep the skills they started with. Include this in the hand-off.
 
 Re-run step 8 whenever this folder's skills are updated: it's also how the person gets new versions without losing their learned rules.
 
@@ -93,5 +96,7 @@ Contents for step 10 (it uses `$HOME`, so it works unchanged on any Mac):
 Tell them, in plain words:
 - Setup is done. **Start a new session** so Claude picks up the new skills (skills load when a session starts). Open it on the **Video Edits** folder in their home folder: that's where their edits live and where the review app opens from.
 - To edit: open a new session and say *"Edit this ad. Brief: <Google Doc link or pasted text>. Footage: <Drive folder link or a folder on this Mac>."*
-- Footage from Drive downloads directly only when the files are shared as "anyone with the link". Otherwise, they should download the folder to their Mac first (or use Google Drive for desktop) and give Claude that folder.
+- Footage on Google Drive: with Google Drive for desktop (step 11), they can give Claude the Drive folder's link, private team folders included. Without it, Claude can only download files shared as "anyone with the link"; otherwise they download the folder to their Mac first and give Claude that folder.
+- To share a finished cut with the team, they ask Claude to put it on Drive in any words ("upload SCB01 to the drive"). The first time, Claude asks for the link of the Drive folder to use, and it asks again when they move on to a different client.
+- Claude checks for updates to the video-editing skills once a day and asks before installing one.
 - To review a cut, ask Claude to "open the review app". In a session on `~/Video Edits`, Claude starts the `review-app` configuration from step 10 and the app opens in the browser panel beside the chat. In any other folder, Claude runs `python3 ~/.claude/skills/apply-notes/scripts/review_server.py` as a background command and they open http://localhost:8765 in their browser. Either way the app stops when that session ends; asking again restarts it. Only one copy can run at a time, so if port 8765 is busy, check whether the app is already open before starting another.

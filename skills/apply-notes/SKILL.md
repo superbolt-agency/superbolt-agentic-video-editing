@@ -1,6 +1,6 @@
 ---
 name: apply-notes
-description: Review loop for agentic video edits. Opens the local review app (every edit's versions and hooks, notes pinned to the playhead with the words spoken there, per-hook approval), then applies the reviewer's open notes to an edit, renders the next version and replies on each note with what changed. Use when the user says "apply notes on ACM08", "do my notes", "action the review notes", "open the review page", "review my edits", "v2 from my notes", or asks what notes are open. Works with edits made by /ve-video-edit-general or any project folder in the review app's projects folder.
+description: Review loop for agentic video edits. Opens the local review app (every edit's versions and hooks, notes pinned to the playhead with the words spoken there, per-hook approval), then applies the reviewer's open notes to an edit, renders the next version and replies on each note with what changed. Use when the user says "apply notes on ACM08", "do my notes", "action the review notes", "open the review page", "review my edits", "v2 from my notes", or asks what notes are open. Also delivers finished cuts to Google Drive: use it whenever the user wants an edit on Drive or with the team, however they say it ("deliver SCB01", "upload it to the drive", "add it to Google Drive", "put the approved cut in the client folder", "send it to the shared folder"). Works with edits made by /ve-video-edit-general or any project folder in the review app's projects folder.
 ---
 
 # Apply notes
@@ -8,6 +8,8 @@ description: Review loop for agentic video edits. Opens the local review app (ev
 The reviewer watches cuts in a local web app and leaves notes at exact timestamps. This skill closes the loop: read the notes, change the edit, render the next version, and answer every note so they can see what was done before they rewatch.
 
 `$AN` = this skill's folder (e.g. `~/.claude/skills/apply-notes`). `$SK` = the `ve-video-edit-general` skill beside it. Projects live in `~/Video Edits/<CODE>/` (set `REVIEW_ROOT` to use another folder).
+
+In a chat session (not a headless run), start by checking for updates as in `$SK/SKILL.md` step 0.
 
 ## The review app
 
@@ -56,4 +58,23 @@ Triggered by "build variations on <CODE>", "/apply-notes <CODE> build variations
 
 ## Approval
 
-Approving is per hook, on the latest version. An approved master stays in `Exports/` (`notes.py status` lists what's approved). Delivery elsewhere (Drive, Frame) is not automated yet; ask the user before uploading anything.
+Approving is per hook, on the latest version. An approved master stays in `Exports/` (`notes.py status` lists what's approved). Getting it onto Google Drive is the next section.
+
+## Deliver to Google Drive
+
+Use this for any request to put finished cuts on Google Drive or in a team folder, whatever the wording. It needs Google Drive for desktop on this Mac (SETUP.md step 11): Drive folders appear as local folders, and `scripts/deliver.py` copies into them. Only in a chat with the person; a headless run never delivers.
+
+1. **Which project.** Take the code from the request. If it's unclear, run `notes.py status` and ask, naming the likely candidates.
+2. **Read the delivery state:** `python3 $AN/scripts/deliver.py show <CODE>`. It returns the saved `destination` (if any), a `suggested` folder (the one used last for projects with the same client prefix, e.g. SCB for SCB01 and SCB02), the `approved` cuts and what's `to_deliver`.
+3. **Settle the destination.** Never pick a folder yourself, and never find one by searching Drive for a name: names repeat (a drive can have three "Sarah Creal" folders) and can carry invisible trailing spaces.
+   - **No destination and no suggestion** (first delivery, or a new client): ask for the Drive folder's link. Tell them how: open the folder in Google Drive in the browser and copy the address bar, or in Finder right-click the folder → Share → Copy link.
+   - **No destination, but a suggestion** (another project for the same client): say where the client's projects went last time and use it unless they say otherwise ("SCB02 will go to Sarah Creal, like SCB01").
+   - **A saved destination, but the request points elsewhere** (they name a different client, brand or folder, or the project's brand doesn't match the folder): ask before switching. Don't silently reuse the old folder or quietly change it.
+   - **Subfolder:** each project goes in its own subfolder inside the client folder, named after the project code by default. On the first delivery for a project, say the name in the same message ("in a new subfolder called SCB01, unless you'd like another name"). The person can choose any name, or no subfolder at all.
+   - Save it: `deliver.py set <CODE> --folder "<link>" [--subfolder "<name>" | --no-subfolder]`. It finds the matching local folder by its Drive ID and remembers the folder for this client. Run `set` again to rename the subfolder or move future deliveries elsewhere; files already delivered aren't moved.
+4. **What ships:** the latest approved version of each hook that hasn't been delivered yet. If nothing is approved, say so and ask: approve in the review app first, or deliver a specific version anyway (`--file Exports/<name>.mp4`, once they've named it).
+5. **Copy:** `deliver.py run <CODE>`. It creates the subfolder if needed, copies without ever overwriting (a same-named file that's identical is skipped; a different one is reported, not replaced), checks each copy byte for byte, and waits until Drive has picked up each file. It logs every delivery in `<CODE>/delivery.json`, so asking again only sends what's new.
+6. **Confirm with Google, when you can.** If a Google Drive connector is available, look up each returned `drive_id` and check that the size matches and the parent is the subfolder. Look up the files themselves: Drive's folder listings can lag a minute behind.
+7. **Tell the person:** what was delivered, where (the folder name and its link), and a link to each file. Report anything under `problems` in plain words.
+
+Don't rename, move or delete anything already in Drive unless the person asks for exactly that: other people use those folders.
