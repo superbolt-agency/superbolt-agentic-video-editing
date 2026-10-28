@@ -38,7 +38,7 @@ When a note states a general rule ("don't cut people off before the end of a sen
 
 ## Install
 
-Get the Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en). Sign in with your Superbolt account. You can skip the step where you need to sync your local folders, it's not necessary.
+Get the Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en). Sign in with your account. You can skip the step where you need to sync your local folders, it's not necessary here.
 
 Open your Terminal (Mac / Applications / Utilities / Terminal). Check if you have Homebrew installed by typing this command and pressing enter.
 ```bash
