@@ -28,19 +28,21 @@ When a note states a general rule ("don't cut people off before the end of a sen
 
 ## Requirements
 
-- **macOS on Apple Silicon.** Transcription uses `mlx-whisper`, rendering uses VideoToolbox, and QA uses Apple Vision OCR.
+- **macOS 15+ on Apple Silicon.** Transcription uses `mlx-whisper`, rendering uses VideoToolbox, and QA uses Apple Vision OCR.
 - [Claude Code](https://claude.com/claude-code), signed in. Opus 5.5 at medium effort works well.
 - Python 3.9+
 - Xcode Command Line Tools
 - `ffmpeg`
 - `mlx-whisper`
-- Optional: Google Drive and Notion MCPs, if your footage and briefs live there. A local folder and pasted text work too.
+- Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en)
 
 ## Install
 
 **Easy Install:** 
 
-Open your Terminal. Check if you have Homebrew installed by typing this command and pressing enter.
+Get the Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en). Sign in with your Superbolt account. You can skip the step where you need to sync your local folders, it's not necessary.
+
+Open your Terminal (Mac / Applications / Utilities / Terminal). Check if you have Homebrew installed by typing this command and pressing enter.
 ```bash
 brew --version
 ```
@@ -70,7 +72,7 @@ Start a new Claude Code session in the Claude desktop app. Choose the repo folde
 Say *"set up video editing"*. Claude follows [`SETUP.md`](SETUP.md): it checks every requirement, installs what's missing, installs the skills and tests transcription.
 
 ---
-**Manual Install (if you don't want to do the easy install):**
+**Manual Install (if you don't want to do the easy install for some reason):**
 
 - Install Python 3.9+, 
 - Install Xcode Command Line Tools (`xcode-select --install`) so `video-qa` can build its OCR helper.
