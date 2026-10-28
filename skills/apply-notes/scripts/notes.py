@@ -6,11 +6,15 @@
   notes.py add CODE FILE SECONDS "text" [--author QA]  add a note (QA flags use --author QA)
   notes.py next CODE HOOK                        path for the next version of a hook (never overwrites)
   notes.py status                                one line per ad: status, open notes, latest versions
+  notes.py packages CODE [--trash | --keep]      draft Premiere packages left over once a hook is approved;
+                                                 --trash moves them (and media nothing else uses) to the Trash,
+                                                 --keep remembers the person wants them kept (not offered again)
 
 ROOT defaults to ~/Video Edits; override with REVIEW_ROOT.
 Writes go to <ROOT>/<CODE>/review-notes.json, the same file the review app reads.
 """
-import json, os, sys, time, uuid
+import json, os, re, sys, time, uuid
+from urllib.parse import unquote
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -97,6 +101,65 @@ def cmd_status():
         print(f"{s['code']:8} {s['status']:9} open={s['open']:<3} {hooks}")
 
 
+def draft_packages(p):
+    """Premiere packages of unapproved, undelivered versions of hooks whose latest version is approved."""
+    pkg = p / "Premiere"
+    if not pkg.is_dir():
+        return [], pkg
+    s = rs.project_summary(p)
+    approvals = rs.load_notes(p)["approvals"]
+    kept = set(json.loads((pkg / ".cleanup.json").read_text()).get("kept", [])) if (pkg / ".cleanup.json").exists() else set()
+    try:
+        delivered = {d.get("cut") for d in json.loads((p / "delivery.json").read_text()).get("delivered", []) if d.get("kind") == "premiere"}
+    except Exception:
+        delivered = set()
+    approved_hooks = {h for h, i in s["hooks"].items() if i["status"] == "approved"}
+    out = []
+    for d in sorted(pkg.iterdir()):
+        if not (d / f"{d.name}.xml").exists():
+            continue
+        hook, _ = rs.parse_name(d.name)
+        if hook in approved_hooks and not approvals.get(f"Exports/{d.name}.mp4") and d.name not in delivered | kept:
+            out.append(d)
+    return out, pkg
+
+
+def cmd_packages(code, trash=False, keep=False):
+    p = proj(code)
+    drafts, pkg = draft_packages(p)
+    if not drafts:
+        print("No draft Premiere packages to clean up.")
+        return
+    size = lambda d: sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+    if keep:
+        f = pkg / ".cleanup.json"
+        d = json.loads(f.read_text()) if f.exists() else {}
+        d["kept"] = sorted(set(d.get("kept", [])) | {x.name for x in drafts})
+        f.write_text(json.dumps(d, indent=2))
+        print(f"Keeping {len(drafts)} package(s); they won't be offered for clean-up again.")
+        return
+    if not trash:
+        print(f"Draft Premiere packages for approved hooks in {code} ({len(drafts)}):")
+        for d in drafts:
+            print(f"  {d.name}  ({size(d) / 1e6:.1f} MB)")
+        print("Run with --trash to move them to the Trash, or --keep to keep them.")
+        return
+    bin_ = Path.home() / ".Trash"
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    for d in drafts:
+        d.rename(bin_ / f"{code} Premiere {d.name} {stamp}")
+        print(f"moved to Trash: {d.name}")
+    # media that no remaining timeline uses
+    used = set()
+    for x in pkg.glob("*/*.xml"):
+        used |= {unquote(u) for u in re.findall(r"<pathurl>file://localhost([^<]+)</pathurl>", x.read_text())}
+    media = pkg / "media"
+    for f in sorted(media.rglob("*")) if media.is_dir() else []:
+        if f.is_file() and str(f) not in used:
+            f.rename(bin_ / f"{code} Premiere media {f.name} {stamp}")
+            print(f"moved to Trash: media/{f.relative_to(media)} (no remaining timeline uses it)")
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     if not a:
@@ -120,5 +183,7 @@ if __name__ == "__main__":
         cmd_next(pos[0], pos[1])
     elif c == "status":
         cmd_status()
+    elif c == "packages":
+        cmd_packages(pos[0], "--trash" in flags, "--keep" in flags)
     else:
         sys.exit(__doc__)

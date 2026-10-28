@@ -60,6 +60,11 @@ Triggered by "build variations on <CODE>", "/apply-notes <CODE> build variations
 
 Approving is per hook, on the latest version. An approved master stays in `Exports/` (`notes.py status` lists what's approved). Getting it onto Google Drive is the next section.
 
+**Offer to tidy draft Premiere packages.** Every render gets a Premiere package, so earlier drafts pile up in `<CODE>/Premiere/`. Approval happens in the review app without Claude, so check for leftovers the next time you work on the project in a chat (applying notes, building variations, uploading, or the person saying they approved something): run `python3 $AN/scripts/notes.py packages <CODE>`.
+- If it lists drafts, ask once, in one sentence, naming them: e.g. "Hook A v3 is approved: want me to remove the draft Premiere packages for v1 and v2 from your Mac? They go to the Trash; the MP4s and review notes stay."
+- Yes: `notes.py packages <CODE> --trash`. It also moves source clips that no remaining timeline uses. No: `notes.py packages <CODE> --keep`, so you don't ask again about those.
+- It never lists approved or delivered versions, or hooks that aren't approved yet. Never decide this yourself, and skip it in a headless run.
+
 ## Deliver to Google Drive
 
 Use this for any request to put finished cuts on Google Drive or in a team folder, whatever the wording. It needs Google Drive for desktop on this Mac (SETUP.md step 11): Drive folders appear as local folders, and `scripts/deliver.py` copies into them. Only in a chat with the person; a headless run never delivers.
