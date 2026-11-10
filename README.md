@@ -36,7 +36,9 @@ When a note states a general rule ("don't cut people off before the end of a sen
 - `mlx-whisper`
 - Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en)
 
-## Install
+## Install Instructions
+
+Make sure your Mac OS version is **15** or higher. You can see your Mac OS version by clicking the Apple logo in the top left and clicking "About This Mac".
 
 Get the Google Drive desktop app (https://support.google.com/a/users/answer/13022292?hl=en). Sign in with your account. You can skip the step where you need to sync your local folders, it's not necessary here.
 
